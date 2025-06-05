@@ -46,7 +46,7 @@ require_once 'includes/navigation.php';
                         <div class="card-body text-center">
                             <h5 class="card-title">Clients</h5>
                             <p class="card-text">Manage your client information.</p>
-                            <a href="#" class="btn btn-primary">Clients</a>
+                            <a href="clients/list.php" class="btn btn-primary">Clients</a>
                         </div>
                     </div>
                 </div>
