@@ -1,0 +1,43 @@
+/* General styles */
+body {
+    padding-top: 20px;
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 10px;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Navbar styles */
+.navbar {
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Login/Register forms */
+.card {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Dashboard cards */
+.dashboard-card {
+    cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    .card {
+        margin-bottom: 20px;
+    }
+}
