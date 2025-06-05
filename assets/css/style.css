@@ -1,43 +1,112 @@
-/* General styles */
-body {
-    padding-top: 20px;
-    background-color: #f8f9fa;
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --success-color: #27ae60;
+    --border-radius: 4px;
 }
 
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f9f9f9;
+    padding-top: 40px;
+}
+
+/* Navigation */
+.navbar {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    color: var(--primary-color) !important;
+    font-size: 1.25rem;
+}
+
+.nav-link {
+    color: var(--secondary-color) !important;
+    font-weight: 500;
+    padding: 8px 15px !important;
+    margin: 0 5px;
+    border-radius: var(--border-radius);
+}
+
+.nav-link:hover {
+    background-color: var(--light-color);
+}
+
+/* Cards */
 .card {
-    border-radius: 10px;
-    transition: transform 0.3s;
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 20px;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
-/* Navbar styles */
-.navbar {
-    border-radius: 5px;
-    margin-bottom: 20px;
+.card-title {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
-/* Login/Register forms */
-.card {
-    max-width: 500px;
-    margin: 0 auto;
+/* Buttons */
+.btn-primary {
+    background-color: var(--accent-color);
+    border: none;
+    padding: 8px 20px;
+    border-radius: var(--border-radius);
+    font-weight: 500;
 }
 
-/* Dashboard cards */
-.dashboard-card {
-    cursor: pointer;
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+/* Forms */
+.form-control {
+    border-radius: var(--border-radius);
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+}
+
+.form-control:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Dashboard */
+.dashboard-header {
+    margin-bottom: 30px;
+}
+
+.dashboard-header h2 {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .navbar-brand {
-        font-size: 1.2rem;
+    body {
+        padding-top: 20px;
+    }
+    
+    .navbar {
+        padding: 10px 0;
     }
     
     .card {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 }

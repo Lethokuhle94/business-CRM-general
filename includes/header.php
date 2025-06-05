@@ -6,8 +6,16 @@
     <title>Invoice App</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="../assets/css/style.css" rel="stylesheet">
+    <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
+    <div class="container-lg">
