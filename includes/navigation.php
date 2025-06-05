@@ -12,6 +12,33 @@
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
                     </li>
+                    
+                    <!-- Invoices Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="invoicesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-invoice me-1"></i> Invoices
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="invoicesDropdown">
+                            <li><a class="dropdown-item" href="invoices/create.php"><i class="fas fa-plus-circle me-1"></i> Create New</a></li>
+                            <li><a class="dropdown-item" href="invoices/list.php"><i class="fas fa-list me-1"></i> View All</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="invoices/reports.php"><i class="fas fa-chart-bar me-1"></i> Reports</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Clients Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="clientsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-users me-1"></i> Clients
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="clientsDropdown">
+                            <li><a class="dropdown-item" href="clients/create.php"><i class="fas fa-user-plus me-1"></i> Add Client</a></li>
+                            <li><a class="dropdown-item" href="clients/list.php"><i class="fas fa-address-book me-1"></i> Client List</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="clients/groups.php"><i class="fas fa-object-group me-1"></i> Groups</a></li>
+                        </ul>
+                    </li>
+                    
                 <?php else: ?>
                     <li class="nav-item">
                         <a class="nav-link" href="index.php"><i class="fas fa-home me-1"></i> Home</a>
