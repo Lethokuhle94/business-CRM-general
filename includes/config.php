@@ -24,4 +24,26 @@ try {
 } catch(PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
+
+function getSettings($pdo, $userId) {
+    $stmt = $pdo->prepare("SELECT * FROM settings WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $settings = $stmt->fetch();
+    
+    if (!$settings) {
+        return [
+            'currency' => 'USD',
+            'logo_path' => null,
+            'company_name' => null,
+            'tax_id' => null,
+            'invoice_prefix' => 'INV'
+        ];
+    }
+    
+    return $settings;
+}
+
+// Add this to your existing config.php
+$settings = getSettings($pdo, $_SESSION['user_id'] ?? 0);
+
 ?>
