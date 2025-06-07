@@ -114,30 +114,30 @@ $total = $subtotal + $tax - $invoice['discount'];
                                 <tr>
                                     <td><?= htmlspecialchars($item['description']) ?></td>
                                     <td><?= $item['quantity'] ?></td>
-                                    <td>$<?= number_format($item['unit_price'], 2) ?></td>
+                                    <td>R<?= number_format($item['unit_price'], 2) ?></td>
                                     <td><?= $item['tax_rate'] ?>%</td>
-                                    <td>$<?= number_format($item['quantity'] * $item['unit_price'] * (1 + ($item['tax_rate'] / 100)), 2) ?></td>
+                                    <td>R<?= number_format($item['quantity'] * $item['unit_price'] * (1 + ($item['tax_rate'] / 100)), 2) ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
                                     <td colspan="4" class="text-end">Subtotal:</td>
-                                    <td>$<?= number_format($subtotal, 2) ?></td>
+                                    <td>R<?= number_format($subtotal, 2) ?></td>
                                 </tr>
                                 <tr>
                                     <td colspan="4" class="text-end">Tax (<?= $invoice['tax_rate'] ?>%):</td>
-                                    <td>$<?= number_format($tax, 2) ?></td>
+                                    <td>R<?= number_format($tax, 2) ?></td>
                                 </tr>
                                 <?php if ($invoice['discount'] > 0): ?>
                                 <tr>
                                     <td colspan="4" class="text-end">Discount:</td>
-                                    <td>-$<?= number_format($invoice['discount'], 2) ?></td>
+                                    <td>-R<?= number_format($invoice['discount'], 2) ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
                                     <td colspan="4" class="text-end fw-bold">Total:</td>
-                                    <td class="fw-bold">$<?= number_format($total, 2) ?></td>
+                                    <td class="fw-bold">R<?= number_format($total, 2) ?></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -167,6 +167,12 @@ $total = $subtotal + $tax - $invoice['discount'];
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Watermark Section -->
+            <div class="text-center mt-4" style="opacity: 0.6;">
+                <img src="/assets/images/watermarks/1.png" alt="Probi Notes Logo" style="height: 20px; vertical-align: middle;">
+                <span class="text-muted" style="font-size: 0.9rem;">Created using Probi Notes</span>
             </div>
         </div>
     </div>

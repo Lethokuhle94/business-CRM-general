@@ -3,8 +3,9 @@
         <!-- Footer -->
         <footer class="mt-5 py-4 text-center text-muted">
             <div class="container">
-                <p class="mb-0">InvoicePro &copy; <?php echo date('Y'); ?></p>
-                <small>A simple, elegant invoicing solution</small>
+                <p class="mb-0">Probi Notes &copy; <?php echo date('Y'); ?></p>
+                <small>Powered by <a href="https://www.binaryintel.co.za" target="_blank">Binary Intel</a>
+</small>
             </div>
         </footer>
 
