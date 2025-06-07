@@ -1,12 +1,15 @@
 <nav class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="/index.php">
-            <b style=color:grey;>PROBI NOTES</b>
+            <b style="color:grey;">PROBI NOTES</b>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Mobile close button -->
+            <button type="button" class="btn-close d-lg-none mobile-close-btn" aria-label="Close menu"></button>
+            
             <ul class="navbar-nav me-auto">
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <li class="nav-item">
@@ -116,7 +119,7 @@
             right: 0;
             background-color: white;
             z-index: 1000;
-            padding: 0 15px;
+            padding: 15px;
             box-shadow: 0 5px 10px rgba(0,0,0,0.1);
             height: 0 !important;
         }
@@ -129,6 +132,36 @@
         
         .navbar-nav {
             padding: 10px 0;
+        }
+        
+        /* Mobile close button styling */
+        .mobile-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            line-height: 1;
+            z-index: 1001;
+        }
+        
+        /* Mobile menu hint */
+        .mobile-menu-hint {
+            display: block;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #6c757d;
+            padding: 5px 0 15px;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .mobile-close-btn {
+            display: none !important;
+        }
+        
+        .mobile-menu-hint {
+            display: none !important;
         }
     }
 </style>
@@ -157,6 +190,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 led.classList.add('active');
             }
         }
+    });
+    
+    // Mobile close button functionality
+    document.querySelector('.mobile-close-btn').addEventListener('click', function() {
+        navbarCollapse.hide();
+        document.querySelector('.navbar-toggler').setAttribute('aria-expanded', 'false');
     });
     
     // Handle link clicks
@@ -192,8 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.innerWidth < 992) {
             const isNavbarClick = e.target.closest('.navbar') !== null;
             const isTogglerClick = e.target.closest('.navbar-toggler') !== null;
+            const isCloseBtnClick = e.target.closest('.mobile-close-btn') !== null;
             
-            if (!isNavbarClick && !isTogglerClick) {
+            if (!isNavbarClick && !isTogglerClick && !isCloseBtnClick) {
                 const toggler = document.querySelector('.navbar-toggler');
                 if (toggler.getAttribute('aria-expanded') === 'true') {
                     navbarCollapse.hide();
