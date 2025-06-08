@@ -36,7 +36,7 @@ require_once 'includes/navigation.php';
                         <div class="card-body text-center">
                             <h5 class="card-title">View Invoices</h5>
                             <p class="card-text">View and manage your existing invoices.</p>
-                            <a href="invoices/view.php" class="btn btn-primary">View All</a>
+                            <a href="invoices/list.php" class="btn btn-primary">View All</a>
                         </div>
                     </div>
                 </div>

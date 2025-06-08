@@ -50,7 +50,7 @@ $invoices = $pdo->query($query)->fetchAll();
                                     <?= ucfirst($invoice['status']) ?>
                                 </span>
                             </td>
-                            <td>$<?= number_format(calculateInvoiceTotal($invoice['id'], $pdo), 2) ?></td>
+                            <td>R<?= number_format(calculateInvoiceTotal($invoice['id'], $pdo), 2, ',', ' ') ?></td>
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     <a href="view.php?id=<?= $invoice['id'] ?>" class="btn btn-outline-primary">
