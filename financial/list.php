@@ -167,6 +167,41 @@ try {
             </div>
         </div>
     </div>
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Create New Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="process_category.php" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
+                        <div class="mb-3">
+                            <label for="categoryName" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="categoryName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryType" class="form-label">Type</label>
+                            <select class="form-select" id="categoryType" name="type" required>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryColor" class="form-label">Color (Hex Code)</label>
+                            <input type="color" class="form-control form-control-color" id="categoryColor" name="color" value="#6c757d">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Add Transaction Modal -->
@@ -205,7 +240,12 @@ try {
                         <input type="number" step="0.01" class="form-control" id="transactionAmount" name="amount" required>
                     </div>
                     <div class="mb-3">
-                        <label for="transactionCategory" class="form-label">Category</label>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="transactionCategory" class="form-label">Category</label>
+                            <button type="button" class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                <i class="fas fa-plus-circle"></i> New Category
+                            </button>
+                        </div>
                         <select class="form-select" id="transactionCategory" name="category_id">
                             <option value="">-- Select Category --</option>
                             <?php foreach ($categories as $category): ?>
@@ -310,6 +350,57 @@ document.addEventListener('DOMContentLoaded', function() {
         categorySelect.value = '';
     });
 });
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing type-category filtering code
+    const typeSelect = document.getElementById('transactionType');
+    const categorySelect = document.getElementById('transactionCategory');
+    
+    typeSelect.addEventListener('change', function() {
+        // ... existing type filtering code ...
+    });
+
+    // ===== ADD THIS NEW CODE BELOW =====
+    
+    // Refresh categories after creating a new one
+    const categoryModal = document.getElementById('addCategoryModal');
+    if (categoryModal) {
+        categoryModal.addEventListener('hidden.bs.modal', function() {
+            fetchCategories();
+        });
+    }
+
+    async function fetchCategories() {
+        try {
+            const response = await fetch(`get_categories.php?user_id=<?= $_SESSION['user_id'] ?>`);
+            if (!response.ok) throw new Error('Network error');
+            
+            const categories = await response.json();
+            const select = document.getElementById('transactionCategory');
+            
+            // Keep the first "Select Category" option
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // Add refreshed categories
+            categories.forEach(category => {
+                const option = new Option(category.name, category.id);
+                option.dataset.type = category.type;
+                select.add(option);
+            });
+            
+            // Re-apply type filtering
+            typeSelect.dispatchEvent(new Event('change'));
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            alert('Failed to refresh categories. Please reload the page.');
+        }
+    }
+});
+</script>
+
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
