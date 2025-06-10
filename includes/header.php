@@ -1,5 +1,5 @@
 <?php 
-$APP_NAME = "InvoicePro";
+$APP_NAME = "Probie-Notes";
 $ROOT_PATH = $_SERVER['DOCUMENT_ROOT'] . '/business-CRM-general';
 $BASE_URL = 'http://' . $_SERVER['HTTP_HOST'] . '/business-CRM-general';
 ?>

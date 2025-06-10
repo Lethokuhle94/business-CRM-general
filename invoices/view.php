@@ -36,11 +36,11 @@ $subtotal = array_reduce($items, function($carry, $item) {
     return $carry + ($item['quantity'] * $item['unit_price']);
 }, 0);
 
-$tax = $subtotal * ($invoice['tax_rate'] / 100);
-$total = $subtotal + $tax - $invoice['discount'];
+$vat = $subtotal * ($invoice['tax_rate'] / 100);
+$total = $subtotal + $vat - $invoice['discount'];
 
 // Generate PDF function
-function generateInvoicePDF($invoice, $items, $subtotal, $tax, $total) {
+function generateInvoicePDF($invoice, $items, $subtotal, $vat, $total) {
     // Create new PDF document
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
     
@@ -103,20 +103,20 @@ function generateInvoicePDF($invoice, $items, $subtotal, $tax, $total) {
     $pdf->Cell(90, 7, 'Description', 1, 0, 'L');
     $pdf->Cell(20, 7, 'Qty', 1, 0, 'R');
     $pdf->Cell(25, 7, 'Unit Price', 1, 0, 'R');
-    $pdf->Cell(25, 7, 'Tax', 1, 0, 'R');
+    $pdf->Cell(25, 7, 'VAT', 1, 0, 'R');
     $pdf->Cell(25, 7, 'Amount', 1, 1, 'R');
     
     // Invoice items
     $pdf->SetFont('helvetica', '', 10);
     foreach ($items as $item) {
         $itemTotal = $item['quantity'] * $item['unit_price'];
-        $itemTax = $itemTotal * ($item['tax_rate'] / 100);
+        $itemVAT = $itemTotal * ($item['tax_rate'] / 100);
         
         $pdf->Cell(90, 7, $item['description'], 1, 0, 'L');
         $pdf->Cell(20, 7, number_format($item['quantity'], 2, ',', ' '), 1, 0, 'R');
         $pdf->Cell(25, 7, 'R ' . number_format($item['unit_price'], 2, ',', ' '), 1, 0, 'R');
         $pdf->Cell(25, 7, $item['tax_rate'] . '%', 1, 0, 'R');
-        $pdf->Cell(25, 7, 'R ' . number_format($itemTotal + $itemTax, 2, ',', ' '), 1, 1, 'R');
+        $pdf->Cell(25, 7, 'R ' . number_format($itemTotal + $itemVAT, 2, ',', ' '), 1, 1, 'R');
     }
     
     // Display totals
@@ -124,8 +124,8 @@ function generateInvoicePDF($invoice, $items, $subtotal, $tax, $total) {
     $pdf->Cell(135, 7, 'Subtotal:', 0, 0, 'R');
     $pdf->Cell(25, 7, 'R ' . number_format($subtotal, 2, ',', ' '), 1, 1, 'R');
     
-    $pdf->Cell(135, 7, 'Tax (' . $invoice['tax_rate'] . '%):', 0, 0, 'R');
-    $pdf->Cell(25, 7, 'R ' . number_format($tax, 2, ',', ' '), 1, 1, 'R');
+    $pdf->Cell(135, 7, 'VAT (' . $invoice['tax_rate'] . '%):', 0, 0, 'R');
+    $pdf->Cell(25, 7, 'R ' . number_format($vat, 2, ',', ' '), 1, 1, 'R');
     
     if ($invoice['discount'] > 0) {
         $pdf->Cell(135, 7, 'Discount:', 0, 0, 'R');
@@ -152,7 +152,7 @@ function generateInvoicePDF($invoice, $items, $subtotal, $tax, $total) {
 
 // Handle PDF download
 if (isset($_GET['download_pdf'])) {
-    $pdf = generateInvoicePDF($invoice, $items, $subtotal, $tax, $total);
+    $pdf = generateInvoicePDF($invoice, $items, $subtotal, $vat, $total);
     $pdf->Output('invoice_' . $invoice['invoice_number'] . '.pdf', 'D');
     exit;
 }
@@ -183,10 +183,10 @@ if (isset($_GET['download_pdf'])) {
                         <div class="col-md-6">
                             <h5>From</h5>
                             <p>
-                                <strong><?= htmlspecialchars($APP_NAME) ?></strong><br>
-                                123 Business Street<br>
-                                Johannesburg, South Africa<br>
-                                VAT: 123456789
+                                <strong>Binary Intel (Pty) Ltd</strong><br>
+                                10 Samson Avenue<br>
+                                Newcastle, South Africa<br>
+                                2940
                             </p>
                         </div>
                         <div class="col-md-6 text-md-end">
@@ -230,7 +230,7 @@ if (isset($_GET['download_pdf'])) {
                                     <th>Description</th>
                                     <th>Quantity</th>
                                     <th>Unit Price</th>
-                                    <th>Tax</th>
+                                    <th>VAT</th>
                                     <th>Amount</th>
                                 </tr>
                             </thead>
@@ -251,8 +251,8 @@ if (isset($_GET['download_pdf'])) {
                                     <td>R <?= number_format($subtotal, 2, ',', ' ') ?></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="4" class="text-end">Tax (<?= $invoice['tax_rate'] ?>%):</td>
-                                    <td>R <?= number_format($tax, 2, ',', ' ') ?></td>
+                                    <td colspan="4" class="text-end">VAT (<?= $invoice['tax_rate'] ?>%):</td>
+                                    <td>R <?= number_format($vat, 2, ',', ' ') ?></td>
                                 </tr>
                                 <?php if ($invoice['discount'] > 0): ?>
                                 <tr>

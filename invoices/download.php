@@ -148,7 +148,7 @@ try {
     $pdf->Cell(100, 7, 'Description', 1, 0, 'C', true);
     $pdf->Cell(20, 7, 'Qty', 1, 0, 'C', true);
     $pdf->Cell(25, 7, 'Unit Price', 1, 0, 'C', true);
-    $pdf->Cell(20, 7, 'Tax %', 1, 0, 'C', true);
+    $pdf->Cell(20, 7, 'VAT %', 1, 0, 'C', true);
     $pdf->Cell(25, 7, 'Amount', 1, 1, 'C', true);
     
     // 18. Items table content
@@ -170,7 +170,7 @@ try {
     $pdf->Cell(140, 7, 'Subtotal:', 0, 0, 'R');
     $pdf->Cell(25, 7, 'R ' . number_format($subtotal, 2, ',', ' '), 1, 1, 'R');
     
-    $pdf->Cell(140, 7, 'Tax (' . $invoice['tax_rate'] . '%):', 0, 0, 'R');
+    $pdf->Cell(140, 7, 'VAT (' . $invoice['tax_rate'] . '%):', 0, 0, 'R');
     $pdf->Cell(25, 7, 'R ' . number_format($tax, 2, ',', ' '), 1, 1, 'R');
     
     if ($invoice['discount'] > 0) {
@@ -189,7 +189,7 @@ try {
     $pdf->Cell(0, 7, 'Banking Details', 0, 1, 'L');
     $pdf->SetFont('helvetica', '', 9);
     $pdf->MultiCell(0, 5, 
-        "Bank Name: Standard Bank\n" .
+        "Bank Name: Standard Bank Business\n" .
         "Branch Name: Newcastle\n" .
         "Branch Code: 007724\n" .
         "Account Holder: The Director Binary Intel (Pty) Ltd\n" .
