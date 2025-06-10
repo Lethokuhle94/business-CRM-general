@@ -1,0 +1,7 @@
+erDiagram
+    users ||--o{ financial_accounts : "1-to-many"
+    users ||--o{ transactions : "1-to-many"
+    users ||--o{ transaction_categories : "1-to-many"
+    financial_accounts ||--o{ transactions : "1-to-many"
+    transaction_categories ||--o{ transactions : "1-to-many"
+    transaction_categories ||--o{ budgets : "1-to-many"
