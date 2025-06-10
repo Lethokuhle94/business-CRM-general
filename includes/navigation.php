@@ -32,6 +32,13 @@
                             Customer Management
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/financial/list.php">
+                            <span class="nav-led" data-target="finance-led"></span>
+                            Financial Management
+                        </a>
+                    </li>
                     
                 <?php else: ?>
                     <li class="nav-item">
