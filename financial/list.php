@@ -9,38 +9,50 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Get all accounts for the user
-$accounts = $pdo->prepare("SELECT * FROM financial_accounts WHERE user_id = ? ORDER BY account_name");
-$accounts->execute([$_SESSION['user_id']]);
-$accounts = $accounts->fetchAll();
+// Safe function to escape output
+function safe_output($data) {
+    return htmlspecialchars((string)$data, ENT_QUOTES, 'UTF-8');
+}
 
-// Get all transactions for the user (last 30 days)
-$transactions = $pdo->prepare("
-    SELECT t.*, a.account_name, c.name as category_name 
-    FROM transactions t
-    LEFT JOIN financial_accounts a ON t.account_id = a.id
-    LEFT JOIN transaction_categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    ORDER BY t.transaction_date DESC
-");
-$transactions->execute([$_SESSION['user_id']]);
-$transactions = $transactions->fetchAll();
+try {
+    // Get all accounts for the user
+    $accounts = $pdo->prepare("SELECT * FROM financial_accounts WHERE user_id = ? ORDER BY account_name");
+    $accounts->execute([$_SESSION['user_id']]);
+    $accounts = $accounts->fetchAll();
 
-// Get all categories for the user
-$categories = $pdo->prepare("SELECT * FROM transaction_categories WHERE user_id = ? OR is_default = TRUE ORDER BY type, name");
-$categories->execute([$_SESSION['user_id']]);
-$categories = $categories->fetchAll();
+    // Get all transactions for the user (last 30 days)
+    $transactions = $pdo->prepare("
+        SELECT t.*, a.account_name, c.name as category_name 
+        FROM transactions t
+        LEFT JOIN financial_accounts a ON t.account_id = a.id
+        LEFT JOIN transaction_categories c ON t.category_id = c.id
+        WHERE t.user_id = ? AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        ORDER BY t.transaction_date DESC
+    ");
+    $transactions->execute([$_SESSION['user_id']]);
+    $transactions = $transactions->fetchAll();
 
-// Calculate totals
-$incomeTotal = $pdo->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'income' AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
-$incomeTotal->execute([$_SESSION['user_id']]);
-$incomeTotal = $incomeTotal->fetch()['total'] ?? 0;
+    // Get all categories for the user
+    $categories = $pdo->prepare("SELECT * FROM transaction_categories WHERE user_id = ? OR is_default = TRUE ORDER BY type, name");
+    $categories->execute([$_SESSION['user_id']]);
+    $categories = $categories->fetchAll();
 
-$expenseTotal = $pdo->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'expense' AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
-$expenseTotal->execute([$_SESSION['user_id']]);
-$expenseTotal = $expenseTotal->fetch()['total'] ?? 0;
+    // Calculate totals
+    $incomeTotal = $pdo->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'income' AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+    $incomeTotal->execute([$_SESSION['user_id']]);
+    $incomeTotal = $incomeTotal->fetch()['total'] ?? 0;
 
-$netTotal = $incomeTotal - $expenseTotal;
+    $expenseTotal = $pdo->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'expense' AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+    $expenseTotal->execute([$_SESSION['user_id']]);
+    $expenseTotal = $expenseTotal->fetch()['total'] ?? 0;
+
+    $netTotal = $incomeTotal - $expenseTotal;
+} catch (PDOException $e) {
+    error_log("Database error: " . $e->getMessage());
+    $_SESSION['error_message'] = "Error loading financial data";
+    header('Location: /dashboard.php');
+    exit;
+}
 ?>
 
 <div class="container mt-4">
@@ -104,8 +116,8 @@ $netTotal = $incomeTotal - $expenseTotal;
                         <?php foreach ($accounts as $account): ?>
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1"><?= htmlspecialchars($account['account_name']) ?></h6>
-                                <small class="text-muted"><?= ucfirst(str_replace('_', ' ', $account['account_type'])) ?></small>
+                                <h6 class="mb-1"><?= safe_output($account['account_name']) ?></h6>
+                                <small class="text-muted"><?= safe_output(ucfirst(str_replace('_', ' ', $account['account_type']))) ?></small>
                             </div>
                             <span class="fw-bold">R <?= number_format($account['current_balance'], 2) ?></span>
                         </div>
@@ -140,9 +152,9 @@ $netTotal = $incomeTotal - $expenseTotal;
                                 <?php foreach ($transactions as $transaction): ?>
                                 <tr>
                                     <td><?= date('d M Y', strtotime($transaction['transaction_date'])) ?></td>
-                                    <td><?= htmlspecialchars($transaction['description']) ?></td>
-                                    <td><?= htmlspecialchars($transaction['account_name']) ?></td>
-                                    <td><?= $transaction['category_name'] ?? '-' ?></td>
+                                    <td><?= safe_output($transaction['description'] ?? '') ?></td>
+                                    <td><?= safe_output($transaction['account_name'] ?? '') ?></td>
+                                    <td><?= safe_output($transaction['category_name'] ?? '-') ?></td>
                                     <td class="text-end <?= $transaction['type'] === 'income' ? 'text-success' : 'text-danger' ?>">
                                         <?= $transaction['type'] === 'income' ? '+' : '-' ?> R <?= number_format($transaction['amount'], 2) ?>
                                     </td>
@@ -184,7 +196,7 @@ $netTotal = $incomeTotal - $expenseTotal;
                         <label for="transactionAccount" class="form-label">Account</label>
                         <select class="form-select" id="transactionAccount" name="account_id" required>
                             <?php foreach ($accounts as $account): ?>
-                            <option value="<?= $account['id'] ?>"><?= htmlspecialchars($account['account_name']) ?></option>
+                            <option value="<?= $account['id'] ?>"><?= safe_output($account['account_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -197,7 +209,9 @@ $netTotal = $incomeTotal - $expenseTotal;
                         <select class="form-select" id="transactionCategory" name="category_id">
                             <option value="">-- Select Category --</option>
                             <?php foreach ($categories as $category): ?>
-                            <option value="<?= $category['id'] ?>" data-type="<?= $category['type'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+                            <option value="<?= $category['id'] ?>" data-type="<?= safe_output($category['type']) ?>">
+                                <?= safe_output($category['name']) ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </div>

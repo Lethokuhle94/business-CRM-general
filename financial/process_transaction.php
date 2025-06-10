@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Validate user
-if (!isset($_SESSION['user_id']) {
+if (!isset($_SESSION['user_id'])) {
     header('Location: /login.php');
     exit;
 }
