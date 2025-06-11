@@ -38,6 +38,23 @@ $transactions = $stmt->fetchAll();
         </div>
     </div>
 
+    <!-- Success/Error Messages -->
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($_SESSION['success']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i><?= htmlspecialchars($_SESSION['error']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
     <div class="card shadow-sm">
         <div class="card-body">
             <!-- Transaction Filters -->
@@ -82,37 +99,49 @@ $transactions = $stmt->fetchAll();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($transactions as $transaction): ?>
+                        <?php if (empty($transactions)): ?>
                         <tr>
-                            <td><?= date('M j, Y', strtotime($transaction['transaction_date'])) ?></td>
-                            <td><?= htmlspecialchars($transaction['description']) ?></td>
-                            <td><?= htmlspecialchars($transaction['account_name']) ?></td>
-                            <td><?= $transaction['category_name'] ? htmlspecialchars($transaction['category_name']) : '-' ?></td>
-                            <td class="text-end <?= $transaction['type'] === 'income' ? 'text-success' : 'text-danger' ?>">
-                                <?= $transaction['type'] === 'income' ? '+' : '-' ?> 
-                                R<?= number_format($transaction['amount'], 2, ',', ' ') ?>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary edit-btn"
-                                            data-id="<?= $transaction['id'] ?>"
-                                            data-date="<?= date('Y-m-d', strtotime($transaction['transaction_date'])) ?>"
-                                            data-type="<?= $transaction['type'] ?>"
-                                            data-account="<?= $transaction['account_id'] ?>"
-                                            data-category="<?= $transaction['category_id'] ?>"
-                                            data-amount="<?= $transaction['amount'] ?>"
-                                            data-description="<?= htmlspecialchars($transaction['description']) ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <a href="delete_transaction.php?id=<?= $transaction['id'] ?>" 
-                                       class="btn btn-outline-danger"
-                                       onclick="return confirm('Are you sure you want to delete this transaction?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                No transactions found. <a href="#" data-bs-toggle="modal" data-bs-target="#addTransactionModal">Add your first transaction</a>.
                             </td>
                         </tr>
-                        <?php endforeach; ?>
+                        <?php else: ?>
+                            <?php foreach ($transactions as $transaction): ?>
+                            <tr>
+                                <td><?= date('M j, Y', strtotime($transaction['transaction_date'])) ?></td>
+                                <td><?= htmlspecialchars($transaction['description']) ?></td>
+                                <td><?= htmlspecialchars($transaction['account_name']) ?></td>
+                                <td><?= $transaction['category_name'] ? htmlspecialchars($transaction['category_name']) : '-' ?></td>
+                                <td class="text-end <?= $transaction['type'] === 'income' ? 'text-success' : 'text-danger' ?>">
+                                    <?= $transaction['type'] === 'income' ? '+' : '-' ?> 
+                                    R<?= number_format($transaction['amount'], 2, ',', ' ') ?>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary edit-btn"
+                                                data-id="<?= $transaction['id'] ?>"
+                                                data-date="<?= date('Y-m-d', strtotime($transaction['transaction_date'])) ?>"
+                                                data-type="<?= $transaction['type'] ?>"
+                                                data-account="<?= $transaction['account_id'] ?>"
+                                                data-category="<?= $transaction['category_id'] ?>"
+                                                data-amount="<?= $transaction['amount'] ?>"
+                                                data-description="<?= htmlspecialchars($transaction['description']) ?>"
+                                                title="Edit Transaction">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger delete-btn"
+                                                data-id="<?= $transaction['id'] ?>"
+                                                data-description="<?= htmlspecialchars($transaction['description']) ?>"
+                                                data-amount="R<?= number_format($transaction['amount'], 2, ',', ' ') ?>"
+                                                title="Delete Transaction">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -239,6 +268,34 @@ $transactions = $stmt->fetchAll();
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteTransactionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Transaction
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to delete this transaction?</p>
+                <div class="alert alert-warning">
+                    <strong>Transaction Details:</strong><br>
+                    <span id="deleteTransactionDetails"></span>
+                </div>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i> Delete Transaction
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Edit Transaction Modal Handler
@@ -258,6 +315,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Delete Transaction Modal Handler
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteTransactionModal'));
+    
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const transactionId = this.dataset.id;
+            const description = this.dataset.description || 'Untitled Transaction';
+            const amount = this.dataset.amount;
+            
+            // Update modal content
+            document.getElementById('deleteTransactionDetails').innerHTML = 
+                '<strong>' + description + '</strong><br>Amount: ' + amount;
+            
+            // Update delete confirmation link
+            document.getElementById('confirmDeleteBtn').href = 'delete_transaction.php?id=' + transactionId;
+            
+            deleteModal.show();
+        });
+    });
+
     // Filter Functionality
     function applyFilters() {
         const type = document.getElementById('filterType').value.toLowerCase();
@@ -266,14 +343,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const endDate = document.getElementById('filterEndDate').value;
         
         document.querySelectorAll('tbody tr').forEach(row => {
+            // Skip the "no transactions" row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const rowType = row.querySelector('td:nth-child(5)').classList.contains('text-success') ? 'income' : 'expense';
-            const rowAccount = row.querySelector('td:nth-child(3)').textContent.trim();
-            const rowDate = new Date(row.querySelector('td:nth-child(1)').textContent);
+            const rowAccountElement = row.querySelector('td:nth-child(3)');
+            const rowAccount = rowAccountElement ? rowAccountElement.textContent.trim() : '';
+            const rowDateElement = row.querySelector('td:nth-child(1)');
+            const rowDate = rowDateElement ? new Date(rowDateElement.textContent) : null;
             
             const typeMatch = !type || rowType === type;
             const accountMatch = !account || rowAccount === account;
-            const dateMatch = (!startDate || rowDate >= new Date(startDate)) && 
-                             (!endDate || rowDate <= new Date(endDate));
+            const dateMatch = (!startDate || !rowDate || rowDate >= new Date(startDate)) && 
+                             (!endDate || !rowDate || rowDate <= new Date(endDate));
             
             row.style.display = typeMatch && accountMatch && dateMatch ? '' : 'none';
         });
