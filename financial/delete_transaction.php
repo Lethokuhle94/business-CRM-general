@@ -1,69 +1,59 @@
 <?php
 require_once '../includes/config.php';
+session_start();
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Check authentication
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /login.php');
-    exit;
-}
-
-// Check if transaction ID is provided
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    $_SESSION['error'] = 'Invalid transaction ID.';
+// Verify CSRF token
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    $_SESSION['error_message'] = "Invalid CSRF token";
     header('Location: transactions.php');
     exit;
 }
 
-$transaction_id = (int)$_GET['id'];
-$user_id = $_SESSION['user_id'];
-
-try {
-    // Start transaction for data integrity
-    $pdo->beginTransaction();
-    
-    // First, verify that the transaction belongs to the current user
-    $verify_query = "SELECT id, description, amount FROM transactions WHERE id = ? AND user_id = ?";
-    $verify_stmt = $pdo->prepare($verify_query);
-    $verify_stmt->execute([$transaction_id, $user_id]);
-    $transaction = $verify_stmt->fetch();
-    
-    if (!$transaction) {
-        throw new Exception('Transaction not found or you do not have permission to delete it.');
-    }
-    
-    // Delete the transaction
-    $delete_query = "DELETE FROM transactions WHERE id = ? AND user_id = ?";
-    $delete_stmt = $pdo->prepare($delete_query);
-    $delete_result = $delete_stmt->execute([$transaction_id, $user_id]);
-    
-    if (!$delete_result) {
-        throw new Exception('Failed to delete transaction.');
-    }
-    
-    // Check if any rows were affected
-    if ($delete_stmt->rowCount() === 0) {
-        throw new Exception('No transaction was deleted. Please try again.');
-    }
-    
-    // Commit the transaction
-    $pdo->commit();
-    
-    // Set success message
-    $_SESSION['success'] = 'Transaction "' . htmlspecialchars($transaction['description']) . '" has been deleted successfully.';
-    
-} catch (Exception $e) {
-    // Rollback the transaction on error
-    $pdo->rollBack();
-    
-    // Set error message
-    $_SESSION['error'] = 'Error deleting transaction: ' . $e->getMessage();
+// Verify user is logged in
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['error_message'] = "You must be logged in";
+    header('Location: ../login.php');
+    exit;
 }
 
-// Redirect back to transactions page
+if (isset($_POST['delete_id'])) {
+    try {
+        $pdo->beginTransaction();
+        
+        // 1. Get the transaction data
+        $stmt = $pdo->prepare("SELECT * FROM transactions WHERE id = ? AND user_id = ?");
+        $stmt->execute([$_POST['delete_id'], $_SESSION['user_id']]);
+        $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$transaction) {
+            throw new Exception("Transaction not found or access denied");
+        }
+        
+        // 2. Move to recycle bin
+        $insert = $pdo->prepare("INSERT INTO transaction_recycle_bin (transaction_data, deleted_by) VALUES (?, ?)");
+        $insert->execute([json_encode($transaction), $_SESSION['user_id']]);
+        
+        // 3. Delete from transactions
+        $delete = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
+        $delete->execute([$_POST['delete_id'], $_SESSION['user_id']]);
+        
+        // 4. Adjust account balance
+        if ($transaction['type'] === 'income') {
+            $update = $pdo->prepare("UPDATE financial_accounts SET current_balance = current_balance - ? WHERE id = ? AND user_id = ?");
+        } else {
+            $update = $pdo->prepare("UPDATE financial_accounts SET current_balance = current_balance + ? WHERE id = ? AND user_id = ?");
+        }
+        $update->execute([$transaction['amount'], $transaction['account_id'], $_SESSION['user_id']]);
+        
+        $pdo->commit();
+        $_SESSION['success_message'] = "Transaction moved to recycle bin";
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Delete Transaction Error: " . $e->getMessage());
+        $_SESSION['error_message'] = "Error deleting transaction";
+    }
+}
+
 header('Location: transactions.php');
 exit;
 ?>

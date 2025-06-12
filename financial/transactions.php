@@ -13,6 +13,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Fetch transactions with account and category names
 $query = "SELECT t.*, a.account_name, c.name as category_name 
           FROM transactions t
@@ -23,6 +28,12 @@ $query = "SELECT t.*, a.account_name, c.name as category_name
 $stmt = $pdo->prepare($query);
 $stmt->execute([$_SESSION['user_id']]);
 $transactions = $stmt->fetchAll();
+
+// Fetch accounts for dropdowns
+$accounts = $pdo->query("SELECT * FROM financial_accounts WHERE user_id = " . $_SESSION['user_id'])->fetchAll();
+
+// Fetch categories for dropdowns
+$categories = $pdo->query("SELECT * FROM transaction_categories WHERE user_id = " . $_SESSION['user_id'] . " OR is_default = TRUE")->fetchAll();
 ?>
 
 <div class="container mt-4">
@@ -32,27 +43,29 @@ $transactions = $stmt->fetchAll();
             <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
                 <i class="fas fa-plus-circle me-1"></i> New Transaction
             </button>
+            <a href="recycle_bin.php" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-trash-restore me-1"></i> Recycle Bin
+            </a>
             <a href="list.php" class="btn btn-outline-secondary">
-                <i class="fas fa-chart-pie me-1"></i> Financial Summary
+                <i class="fas fa-chart-pie me-1"></i> Summary
             </a>
         </div>
     </div>
 
-    <!-- Success/Error Messages -->
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($_SESSION['success']) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <?php if (isset($_SESSION['success_message'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success_message'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <?php unset($_SESSION['success']); ?>
+        <?php unset($_SESSION['success_message']); ?>
     <?php endif; ?>
 
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i><?= htmlspecialchars($_SESSION['error']) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <?php if (isset($_SESSION['error_message'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error_message'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <?php unset($_SESSION['error']); ?>
+        <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
 
     <div class="card shadow-sm">
@@ -70,9 +83,7 @@ $transactions = $stmt->fetchAll();
                 <div class="col-md-3">
                     <select class="form-select" id="filterAccount">
                         <option value="">All Accounts</option>
-                        <?php 
-                        $accounts = $pdo->query("SELECT * FROM financial_accounts WHERE user_id = " . $_SESSION['user_id'])->fetchAll();
-                        foreach ($accounts as $account): ?>
+                        <?php foreach ($accounts as $account): ?>
                         <option value="<?= $account['id'] ?>"><?= htmlspecialchars($account['account_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -100,12 +111,16 @@ $transactions = $stmt->fetchAll();
                     </thead>
                     <tbody>
                         <?php if (empty($transactions)): ?>
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="fas fa-inbox fa-2x mb-2"></i><br>
-                                No transactions found. <a href="#" data-bs-toggle="modal" data-bs-target="#addTransactionModal">Add your first transaction</a>.
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-info-circle fa-2x mb-3 text-muted"></i>
+                                    <h5>No transactions found</h5>
+                                    <p class="text-muted">Start by adding your first transaction</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                                        <i class="fas fa-plus-circle me-1"></i> Add Transaction
+                                    </button>
+                                </td>
+                            </tr>
                         <?php else: ?>
                             <?php foreach ($transactions as $transaction): ?>
                             <tr>
@@ -115,7 +130,7 @@ $transactions = $stmt->fetchAll();
                                 <td><?= $transaction['category_name'] ? htmlspecialchars($transaction['category_name']) : '-' ?></td>
                                 <td class="text-end <?= $transaction['type'] === 'income' ? 'text-success' : 'text-danger' ?>">
                                     <?= $transaction['type'] === 'income' ? '+' : '-' ?> 
-                                    R<?= number_format($transaction['amount'], 2, ',', ' ') ?>
+                                    R<?= number_format($transaction['amount'], 2) ?>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
@@ -126,15 +141,12 @@ $transactions = $stmt->fetchAll();
                                                 data-account="<?= $transaction['account_id'] ?>"
                                                 data-category="<?= $transaction['category_id'] ?>"
                                                 data-amount="<?= $transaction['amount'] ?>"
-                                                data-description="<?= htmlspecialchars($transaction['description']) ?>"
-                                                title="Edit Transaction">
+                                                data-description="<?= htmlspecialchars($transaction['description']) ?>">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger delete-btn"
+                                        <button class="btn btn-outline-danger delete-btn" 
                                                 data-id="<?= $transaction['id'] ?>"
-                                                data-description="<?= htmlspecialchars($transaction['description']) ?>"
-                                                data-amount="R<?= number_format($transaction['amount'], 2, ',', ' ') ?>"
-                                                title="Delete Transaction">
+                                                data-description="<?= htmlspecialchars($transaction['description']) ?>">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -158,6 +170,7 @@ $transactions = $stmt->fetchAll();
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="process_transaction.php" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <div class="modal-body">
                     <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
                     <div class="mb-3">
@@ -188,10 +201,10 @@ $transactions = $stmt->fetchAll();
                         <label class="form-label">Category</label>
                         <select class="form-select" name="category_id">
                             <option value="">-- Select Category --</option>
-                            <?php 
-                            $categories = $pdo->query("SELECT * FROM transaction_categories WHERE user_id = " . $_SESSION['user_id'] . " OR is_default = TRUE")->fetchAll();
-                            foreach ($categories as $category): ?>
-                            <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+                            <?php foreach ($categories as $category): ?>
+                            <option value="<?= $category['id'] ?>" data-type="<?= $category['type'] ?>">
+                                <?= htmlspecialchars($category['name']) ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -219,6 +232,7 @@ $transactions = $stmt->fetchAll();
             </div>
             <form action="process_transaction.php" method="POST">
                 <input type="hidden" name="edit_id" id="editId">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -246,11 +260,18 @@ $transactions = $stmt->fetchAll();
                         <input type="number" step="0.01" class="form-control" name="amount" id="editAmount" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label">Category</label>
+                            <button type="button" class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                <i class="fas fa-plus-circle"></i> New Category
+                            </button>
+                        </div>
                         <select class="form-select" name="category_id" id="editCategory">
                             <option value="">-- Select Category --</option>
                             <?php foreach ($categories as $category): ?>
-                            <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+                            <option value="<?= $category['id'] ?>" data-type="<?= $category['type'] ?>">
+                                <?= htmlspecialchars($category['name']) ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -269,32 +290,36 @@ $transactions = $stmt->fetchAll();
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteTransactionModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Transaction
-                </h5>
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Move to Recycle Bin</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p class="mb-3">Are you sure you want to delete this transaction?</p>
-                <div class="alert alert-warning">
-                    <strong>Transaction Details:</strong><br>
-                    <span id="deleteTransactionDetails"></span>
+            <form method="POST" action="delete_transaction.php">
+                <input type="hidden" name="delete_id" id="deleteId">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <div class="modal-body">
+                    <p>You are about to move this transaction to the recycle bin:</p>
+                    <p><strong id="deleteDescription"></strong></p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This will adjust your account balance. You can restore it later from the recycle bin.
+                    </div>
                 </div>
-                <p class="text-muted small">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
-                    <i class="fas fa-trash me-1"></i> Delete Transaction
-                </a>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Move to Recycle Bin
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<!-- Add Category Modal (Same as before) -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -311,26 +336,20 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editDescription').value = this.dataset.description;
             document.getElementById('editCategory').value = this.dataset.category || '';
             
+            // Trigger type change to filter categories
+            filterCategoryOptions('editType', 'editCategory');
+            
             editModal.show();
         });
     });
 
-    // Delete Transaction Modal Handler
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteTransactionModal'));
+    // Delete Button Handler
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const transactionId = this.dataset.id;
-            const description = this.dataset.description || 'Untitled Transaction';
-            const amount = this.dataset.amount;
-            
-            // Update modal content
-            document.getElementById('deleteTransactionDetails').innerHTML = 
-                '<strong>' + description + '</strong><br>Amount: ' + amount;
-            
-            // Update delete confirmation link
-            document.getElementById('confirmDeleteBtn').href = 'delete_transaction.php?id=' + transactionId;
-            
+            document.getElementById('deleteId').value = this.dataset.id;
+            document.getElementById('deleteDescription').textContent = this.dataset.description;
             deleteModal.show();
         });
     });
@@ -343,31 +362,61 @@ document.addEventListener('DOMContentLoaded', function() {
         const endDate = document.getElementById('filterEndDate').value;
         
         document.querySelectorAll('tbody tr').forEach(row => {
-            // Skip the "no transactions" row
-            if (row.querySelector('td[colspan]')) {
-                return;
-            }
+            if (row.querySelector('td:first-child').colSpan) return; // Skip empty row
             
             const rowType = row.querySelector('td:nth-child(5)').classList.contains('text-success') ? 'income' : 'expense';
-            const rowAccountElement = row.querySelector('td:nth-child(3)');
-            const rowAccount = rowAccountElement ? rowAccountElement.textContent.trim() : '';
-            const rowDateElement = row.querySelector('td:nth-child(1)');
-            const rowDate = rowDateElement ? new Date(rowDateElement.textContent) : null;
+            const rowAccount = row.querySelector('td:nth-child(3)').textContent.trim();
+            const rowDate = new Date(row.querySelector('td:first-child').textContent);
             
             const typeMatch = !type || rowType === type;
-            const accountMatch = !account || rowAccount === account;
-            const dateMatch = (!startDate || !rowDate || rowDate >= new Date(startDate)) && 
-                             (!endDate || !rowDate || rowDate <= new Date(endDate));
+            const accountMatch = !account || rowAccount === document.querySelector(`#filterAccount option[value="${account}"]`).text;
+            const dateMatch = (!startDate || rowDate >= new Date(startDate)) && 
+                             (!endDate || rowDate <= new Date(endDate));
             
             row.style.display = typeMatch && accountMatch && dateMatch ? '' : 'none';
         });
     }
+    
+    // Category Filtering
+    function filterCategoryOptions(typeSelectId, categorySelectId) {
+        const typeSelect = document.getElementById(typeSelectId);
+        const categorySelect = document.getElementById(categorySelectId);
+        
+        if (typeSelect && categorySelect) {
+            const selectedType = typeSelect.value;
+            const options = categorySelect.querySelectorAll('option');
+            
+            options.forEach(option => {
+                if (option.value === '') return;
+                
+                const optionType = option.dataset.type;
+                if (selectedType === 'income' && optionType === 'income') {
+                    option.style.display = '';
+                } else if (selectedType === 'expense' && optionType === 'expense') {
+                    option.style.display = '';
+                } else if (selectedType === 'transfer') {
+                    option.style.display = 'none';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        }
+    }
+    
+    // Initialize filtering for add modal
+    document.getElementById('transactionType').addEventListener('change', function() {
+        filterCategoryOptions('transactionType', 'transactionCategory');
+    });
     
     // Add event listeners to filters
     document.getElementById('filterType').addEventListener('change', applyFilters);
     document.getElementById('filterAccount').addEventListener('change', applyFilters);
     document.getElementById('filterStartDate').addEventListener('change', applyFilters);
     document.getElementById('filterEndDate').addEventListener('change', applyFilters);
+    
+    // Initialize filters
+    applyFilters();
+    filterCategoryOptions('transactionType', 'transactionCategory');
 });
 </script>
 
