@@ -234,3 +234,30 @@ p {
     }
 }
 
+/* Add to style.css */
+/* Quotation specific styles */
+.quotation-badge {
+    background-color: #6f42c1;
+}
+
+.card-quotation {
+    border-left: 4px solid #6f42c1;
+}
+
+/* Status colors for quotations */
+.badge-quotation-draft {
+    background-color: #6c757d;
+}
+.badge-quotation-sent {
+    background-color: #0d6efd;
+}
+.badge-quotation-accepted {
+    background-color: #198754;
+}
+.badge-quotation-rejected {
+    background-color: #dc3545;
+}
+.badge-quotation-expired {
+    background-color: #fd7e14;
+}
+
