@@ -1,3 +1,11 @@
+<?php
+// Ensure BASE_URL is properly set
+if (!isset($BASE_URL)) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
+    $BASE_URL = $protocol . $_SERVER['HTTP_HOST'] . '/business-CRM-general';
+}
+?>
+
 <nav class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="<?= $BASE_URL ?>/index.php">
@@ -67,18 +75,13 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="systemDropdown">
                             <li>
-                                <a class="dropdown-item" href="<?= $BASE_URL ?>/recycle_bin.php">
+                                <a class="dropdown-item" href="<?= $BASE_URL ?>/recycle_bin/recycle_bin.php">
                                     <i class="fas fa-trash-restore me-2"></i>Recycle Bin
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item" href="<?= $BASE_URL ?>/settings.php">
                                     <i class="fas fa-sliders-h me-2"></i>Settings
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-file-export me-2"></i>Backup
                                 </a>
                             </li>
                         </ul>
