@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 11, 2025 at 09:07 AM
+-- Generation Time: Jun 14, 2025 at 05:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -99,8 +99,8 @@ CREATE TABLE `financial_accounts` (
 --
 
 INSERT INTO `financial_accounts` (`id`, `user_id`, `account_name`, `account_type`, `account_number`, `bank_name`, `opening_balance`, `current_balance`, `currency`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Sales', 'cash', '10233105571', 'Standard bank', 0.00, 110.00, 'ZAR', 'All cash sales account.', 1, '2025-06-10 15:34:50', '2025-06-10 15:37:25'),
-(2, 1, 'Expenses', 'bank', '10233105571', 'Standard bank', 0.00, -524.00, 'ZAR', 'Expense Accounts', 1, '2025-06-10 15:49:28', '2025-06-10 15:50:05'),
+(1, 1, 'Sales', 'cash', '10233105571', 'Standard bank', 0.00, 110.00, 'ZAR', 'All cash sales account.', 1, '2025-06-10 15:34:50', '2025-06-13 04:57:28'),
+(2, 1, 'Expenses', 'bank', '10233105571', 'Standard bank', 0.00, 0.00, 'ZAR', 'Expense Accounts', 1, '2025-06-10 15:49:28', '2025-06-12 07:59:13'),
 (3, 1, 'Bank', 'bank', '10233105571', 'Standard bank', 200.00, 320.00, 'ZAR', 'Money in the bank', 1, '2025-06-10 15:51:34', '2025-06-10 17:35:08');
 
 -- --------------------------------------------------------
@@ -145,7 +145,8 @@ CREATE TABLE `invoices` (
 --
 
 INSERT INTO `invoices` (`id`, `invoice_number`, `client_id`, `date`, `due_date`, `status`, `tax_rate`, `discount`, `notes`, `created_at`, `updated_at`) VALUES
-(3, 'INV-20250605-6841DBF4B2317', 1, '2025-06-05', '2025-07-05', 'draft', 10.00, 0.00, 'will be delivered next week monday', '2025-06-05 18:03:32', '2025-06-05 18:03:32');
+(3, 'INV-20250605-6841DBF4B2317', 1, '2025-06-05', '2025-07-05', 'draft', 10.00, 0.00, 'will be delivered next week monday', '2025-06-05 18:03:32', '2025-06-05 18:03:32'),
+(4, 'INV-20250614-684D8D3C857CB', 1, '2025-06-14', '2025-07-14', 'draft', 15.00, 0.00, 'Converted from Quotation #QTN-20250614-684D8820E5D97\n', '2025-06-14 14:54:52', '2025-06-14 14:54:52');
 
 -- --------------------------------------------------------
 
@@ -168,7 +169,59 @@ CREATE TABLE `invoice_items` (
 
 INSERT INTO `invoice_items` (`id`, `invoice_id`, `description`, `quantity`, `unit_price`, `tax_rate`) VALUES
 (5, 3, 'sand', 1.00, 200.00, 10.00),
-(6, 3, 'ash', 3.00, 97.60, 0.00);
+(6, 3, 'ash', 3.00, 97.60, 0.00),
+(7, 4, 'camera', 1.00, 500.00, 15.00),
+(8, 4, '100m wire', 1.00, 100.00, 0.00);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotations`
+--
+
+CREATE TABLE `quotations` (
+  `id` int(11) NOT NULL,
+  `quotation_number` varchar(50) NOT NULL,
+  `client_id` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `expiry_date` date NOT NULL,
+  `status` enum('draft','sent','accepted','rejected','expired') DEFAULT 'draft',
+  `tax_rate` decimal(5,2) DEFAULT 0.00,
+  `discount` decimal(10,2) DEFAULT 0.00,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `quotations`
+--
+
+INSERT INTO `quotations` (`id`, `quotation_number`, `client_id`, `date`, `expiry_date`, `status`, `tax_rate`, `discount`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 'QTN-20250614-684D8820E5D97', 1, '2025-06-14', '2025-07-14', '', 15.00, 0.00, '', '2025-06-14 14:33:04', '2025-06-14 14:54:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotation_items`
+--
+
+CREATE TABLE `quotation_items` (
+  `id` int(11) NOT NULL,
+  `quotation_id` int(11) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `quantity` decimal(10,2) NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
+  `tax_rate` decimal(5,2) DEFAULT 0.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `quotation_items`
+--
+
+INSERT INTO `quotation_items` (`id`, `quotation_id`, `description`, `quantity`, `unit_price`, `tax_rate`) VALUES
+(2, 1, 'camera', 1.00, 500.00, 15.00),
+(3, 1, '100m wire', 1.00, 100.00, 0.00);
 
 -- --------------------------------------------------------
 
@@ -215,9 +268,8 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`id`, `user_id`, `account_id`, `transaction_date`, `amount`, `type`, `category_id`, `payee`, `description`, `reference`, `is_reconciled`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, '2025-06-10', 110.00, 'income', NULL, NULL, 'JSE Stocks', NULL, 0, '2025-06-10 15:37:25', '2025-06-10 15:37:25'),
-(2, 1, 2, '2025-06-10', 524.00, 'expense', NULL, NULL, 'CK Electromechanics - Transport', NULL, 0, '2025-06-10 15:50:05', '2025-06-10 15:50:05'),
-(4, 1, 3, '2025-06-10', 120.00, 'income', 1, NULL, 'Monthly subscription fee', NULL, 0, '2025-06-10 17:35:07', '2025-06-10 17:35:07');
+(4, 1, 3, '2025-06-10', 120.00, 'income', 1, NULL, 'Monthly subscription fee', NULL, 0, '2025-06-10 17:35:07', '2025-06-10 17:35:07'),
+(5, 1, 1, '2025-06-10', 110.00, 'income', NULL, NULL, 'JSE Stocks', NULL, 0, '2025-06-10 15:37:25', '2025-06-13 04:57:28');
 
 -- --------------------------------------------------------
 
@@ -241,6 +293,26 @@ CREATE TABLE `transaction_categories` (
 
 INSERT INTO `transaction_categories` (`id`, `user_id`, `name`, `type`, `color`, `is_default`, `created_at`) VALUES
 (1, 1, 'Subscription', 'income', '#22b90e', 0, '2025-06-10 17:29:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `transaction_recycle_bin`
+--
+
+CREATE TABLE `transaction_recycle_bin` (
+  `id` int(11) NOT NULL,
+  `transaction_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`transaction_data`)),
+  `deleted_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_by` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transaction_recycle_bin`
+--
+
+INSERT INTO `transaction_recycle_bin` (`id`, `transaction_data`, `deleted_at`, `deleted_by`) VALUES
+(1, '{\"id\":2,\"user_id\":1,\"account_id\":2,\"transaction_date\":\"2025-06-10\",\"amount\":\"524.00\",\"type\":\"expense\",\"category_id\":null,\"payee\":null,\"description\":\"CK Electromechanics - Transport\",\"reference\":null,\"is_reconciled\":0,\"created_at\":\"2025-06-10 17:50:05\",\"updated_at\":\"2025-06-10 17:50:05\"}', '2025-06-12 07:59:13', 1);
 
 -- --------------------------------------------------------
 
@@ -316,6 +388,22 @@ ALTER TABLE `invoice_items`
   ADD KEY `invoice_id` (`invoice_id`);
 
 --
+-- Indexes for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotation_number` (`quotation_number`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_client` (`client_id`);
+
+--
+-- Indexes for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quotation_id` (`quotation_id`);
+
+--
 -- Indexes for table `settings`
 --
 ALTER TABLE `settings`
@@ -337,6 +425,13 @@ ALTER TABLE `transactions`
 ALTER TABLE `transaction_categories`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `transaction_recycle_bin`
+--
+ALTER TABLE `transaction_recycle_bin`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `deleted_by` (`deleted_by`);
 
 --
 -- Indexes for table `users`
@@ -378,13 +473,25 @@ ALTER TABLE `financial_reports`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `invoice_items`
 --
 ALTER TABLE `invoice_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `quotations`
+--
+ALTER TABLE `quotations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `settings`
@@ -396,13 +503,19 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `transaction_categories`
 --
 ALTER TABLE `transaction_categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `transaction_recycle_bin`
+--
+ALTER TABLE `transaction_recycle_bin`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -446,6 +559,12 @@ ALTER TABLE `invoice_items`
   ADD CONSTRAINT `invoice_items_ibfk_1` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  ADD CONSTRAINT `quotation_items_ibfk_1` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `settings`
 --
 ALTER TABLE `settings`
@@ -464,6 +583,12 @@ ALTER TABLE `transactions`
 --
 ALTER TABLE `transaction_categories`
   ADD CONSTRAINT `transaction_categories_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `transaction_recycle_bin`
+--
+ALTER TABLE `transaction_recycle_bin`
+  ADD CONSTRAINT `transaction_recycle_bin_ibfk_1` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

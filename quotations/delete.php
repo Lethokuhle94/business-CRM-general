@@ -13,24 +13,42 @@ $quotationId = (int)$_GET['id'];
 try {
     $pdo->beginTransaction();
 
-    // Check if quotation exists
-    $stmt = $pdo->prepare("SELECT id FROM quotations WHERE id = ?");
+    // 1. Get the quotation and its items
+    $stmt = $pdo->prepare("SELECT * FROM quotations WHERE id = ?");
     $stmt->execute([$quotationId]);
-    if (!$stmt->fetch()) {
+    $quotation = $stmt->fetch();
+
+    if (!$quotation) {
         throw new Exception('Quotation not found');
     }
 
-    // First delete all related quotation items
-    $stmt = $pdo->prepare("DELETE FROM quotation_items WHERE quotation_id = ?");
-    $stmt->execute([$quotationId]);
+    // Get quotation items
+    $items = $pdo->prepare("SELECT * FROM quotation_items WHERE quotation_id = ?");
+    $items->execute([$quotationId]);
+    $quotationItems = $items->fetchAll();
 
-    // Then delete the quotation
-    $stmt = $pdo->prepare("DELETE FROM quotations WHERE id = ?");
-    $stmt->execute([$quotationId]);
+    // 2. Store in recycle bin
+    $insert = $pdo->prepare("
+        INSERT INTO quotation_recycle_bin 
+        (quotation_data, items_data, deleted_by)
+        VALUES (?, ?, ?)
+    ");
+    $insert->execute([
+        json_encode($quotation),
+        json_encode($quotationItems),
+        $_SESSION['user_id']
+    ]);
+
+    // 3. Delete items
+    $deleteItems = $pdo->prepare("DELETE FROM quotation_items WHERE quotation_id = ?");
+    $deleteItems->execute([$quotationId]);
+
+    // 4. Delete quotation
+    $deleteQuotation = $pdo->prepare("DELETE FROM quotations WHERE id = ?");
+    $deleteQuotation->execute([$quotationId]);
 
     $pdo->commit();
-
-    $_SESSION['success'] = 'Quotation deleted successfully';
+    $_SESSION['success'] = 'Quotation moved to recycle bin';
 } catch (Exception $e) {
     $pdo->rollBack();
     $_SESSION['error'] = 'Error deleting quotation: ' . $e->getMessage();
